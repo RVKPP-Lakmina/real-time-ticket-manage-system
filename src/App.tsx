@@ -2,7 +2,7 @@ import MainStoreProvider from "./providers/MainStoreProvider";
 import "./App.css";
 import React from "react";
 import useMainStore from "./hooks/use-main-store";
-import pageMapping from "./components/component-mapping/pages-mappint";
+import pageMapping from "./components/component-mapping/pages-mapping";
 
 function App() {
   return (

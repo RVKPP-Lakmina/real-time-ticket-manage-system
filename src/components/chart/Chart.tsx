@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 import {
   Card,
@@ -18,45 +18,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { chartData } from "@/assets/constants/constants";
+import useMainStore from "@/hooks/use-main-store";
+import CinamaticButton from "../CinamaticButton";
 
 const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  desktop: {
-    label: "Desktop",
+  ticketPoolCapacity: {
+    label: "Ticket Pool Capacity /s",
     color: "hsl(var(--chart-1))",
-  },
-  mobile: {
-    label: "Mobile",
-    color: "hsl(var(--chart-2))",
   },
 } satisfies ChartConfig;
 
 export default function TimeRangeChart() {
-  const [timeRange, setTimeRange] = React.useState("90d");
-
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date);
-    const referenceDate = new Date("2024-06-30");
-    let daysToSubtract = 90;
-    if (timeRange === "30d") {
-      daysToSubtract = 30;
-    } else if (timeRange === "7d") {
-      daysToSubtract = 7;
-    }
-    const startDate = new Date(referenceDate);
-    startDate.setDate(startDate.getDate() - daysToSubtract);
-    return date >= startDate;
-  });
+  const { filteredData } = useMainStore();
 
   return (
     <Card className="bg-black text-white border-none shadow-md rounded-lg w-full h-full">
@@ -64,31 +37,20 @@ export default function TimeRangeChart() {
       <CardHeader className="flex items-center gap-4 space-y-0 border-b border-gray-700 py-5 sm:flex-row">
         <div className="grid flex-1 gap-1 text-center sm:text-left">
           <CardTitle className="text-lg font-semibold">
-            Area Chart - Interactive
+            Ticket Pool Status With Time
           </CardTitle>
           <CardDescription className="text-sm text-gray-400">
-            Showing total visitors for the last 3 months
+            Showing total Ticket pool status with time while buying and selling
+            tickets.
           </CardDescription>
         </div>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger
-            className="w-[160px] rounded-lg bg-gray-800 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            aria-label="Select a value"
-          >
-            <SelectValue placeholder="Last 3 months" />
-          </SelectTrigger>
-          <SelectContent className="rounded-lg bg-gray-800 text-white">
-            <SelectItem value="90d" className="hover:bg-gray-700 rounded-lg">
-              Last 3 months
-            </SelectItem>
-            <SelectItem value="30d" className="hover:bg-gray-700 rounded-lg">
-              Last 30 days
-            </SelectItem>
-            <SelectItem value="7d" className="hover:bg-gray-700 rounded-lg">
-              Last 7 days
-            </SelectItem>
-          </SelectContent>
-        </Select>
+
+        <div>
+          <h3>Total Pool Ticket Count Now:</h3>
+          <h2>
+            {filteredData[filteredData.length - 1]?.["ticketPoolCapacity"]}
+          </h2>
+        </div>
       </CardHeader>
 
       {/* Card Content */}
@@ -103,12 +65,12 @@ export default function TimeRangeChart() {
               <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-desktop)"
+                  stopColor="var(--color-ticketPoolCapacity)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-desktop)"
+                  stopColor="var(--color-ticketPoolCapacity)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -140,11 +102,20 @@ export default function TimeRangeChart() {
               minTickGap={32}
               tick={{ fill: "#aaa", fontSize: "12px" }}
               tickFormatter={(value) => {
-                const date = new Date(value);
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                });
+                const seconds = Math.floor(value / 10000); // Assuming `value` is in milliseconds
+                return `${seconds}s`;
+              }}
+            />
+
+            <YAxis
+              dataKey="ticketPoolCapacity"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+              tick={{ fill: "#aaa", fontSize: "12px" }}
+              tickFormatter={(value) => {
+                return value;
               }}
             />
 
@@ -154,30 +125,18 @@ export default function TimeRangeChart() {
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
-                    return new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
+                    const seconds = Math.floor(value / 10000); // Assuming `value` is in milliseconds
+                    return `${seconds}s`;
                   }}
                   indicator="dot"
                 />
               }
             />
-
-            {/* Areas */}
             <Area
-              dataKey="mobile"
-              type="natural"
-              fill="url(#fillMobile)"
-              stroke="var(--color-mobile)"
-              strokeWidth={2}
-              stackId="a"
-            />
-            <Area
-              dataKey="desktop"
+              dataKey="ticketPoolCapacity"
               type="natural"
               fill="url(#fillDesktop)"
-              stroke="var(--color-desktop)"
+              stroke="var(--color-ticketPoolCapacity)"
               strokeWidth={2}
               stackId="a"
             />
@@ -189,6 +148,19 @@ export default function TimeRangeChart() {
             />
           </AreaChart>
         </ChartContainer>
+
+        <div className="flex gap-5 items-center">
+          <div>
+            <h3>Remainig Total Ticket Count</h3>
+            <h2>
+              {filteredData[filteredData.length - 1]?.["pendingTotalTickets"]}
+            </h2>
+          </div>
+
+          <CinamaticButton onClick={() => {}}>
+            {filteredData.length}
+          </CinamaticButton>
+        </div>
       </CardContent>
     </Card>
   );

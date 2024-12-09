@@ -1,14 +1,60 @@
 import TimeRangeChart from "@/components/chart/Chart";
 import UserList from "@/components/UserList";
+import useMainStore from "@/hooks/use-main-store";
+import { UserCard } from "@/interfaces/main-store";
+import React from "react";
+import { useEffect } from "react";
+
+interface UserTypesData {
+  vendor: UserCard[];
+  customer: UserCard[];
+}
 
 const Dashboard = () => {
-  const activeVendors = Array.from({ length: 50 }).map(
-    (_, i, a) => `v1.2.0-vendor.${a.length - i}`
-  );
+  const { userBuffer } = useMainStore();
+  const [userList, setUserList] = React.useState<UserTypesData>({
+    vendor: [],
+    customer: [],
+  } as UserTypesData);
 
-  const activeCustomers = Array.from({ length: 50 }).map(
-    (_, i, a) => `v1.2.0-customer.${a.length - i}`
-  );
+  useEffect(() => {
+    if (!userBuffer.current) return;
+
+    const interval = setInterval(() => {
+      setUserList(() => {
+        let dataObject: UserTypesData = {
+          vendor: [],
+          customer: [],
+        };
+
+        Object.entries(userBuffer.current!).forEach(([key, value]) => {
+          const dataKey = key.split("-")[0];
+
+          switch (dataKey) {
+            case "vendor": {
+              dataObject = {
+                ...dataObject,
+                vendor: [...dataObject["vendor"], value],
+              };
+              break;
+            }
+            case "customer": {
+              dataObject = {
+                ...dataObject,
+                customer: [...dataObject["customer"], value],
+              };
+              break;
+            }
+          }
+        });
+
+        return dataObject;
+      });
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [userBuffer]);
+
   return (
     <div
       className="overflow-auto [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-thumb]:rounded-full"
@@ -21,10 +67,10 @@ const Dashboard = () => {
         {/* User List Section */}
         <div className="flex flex-col gap-6 w-4/12">
           <div className="bg-gray-800 rounded-md p-4 shadow-lg">
-            <UserList tags={activeVendors} title="Vendor" />
+            <UserList userData={userList.vendor} title="Vendor" />
           </div>
           <div className="bg-gray-800 rounded-md p-4 shadow-lg">
-            <UserList tags={activeCustomers} title="Customer" />
+            <UserList userData={userList.customer} title="Customer" />
           </div>
         </div>
 

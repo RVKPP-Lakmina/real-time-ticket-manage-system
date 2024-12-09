@@ -22,6 +22,11 @@ const routes: Record<string, Routes> = {
     label: "Settings",
     children: {},
   },
+  "/sign-up": {
+    id: "/sign-up",
+    label: "Create a New User",
+    children: {},
+  },
 };
 
 export default routes;
