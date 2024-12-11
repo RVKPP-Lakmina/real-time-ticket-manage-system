@@ -64,8 +64,7 @@ const Dashboard = () => {
       }}
     >
       <div className="p-4 flex gap-6 w-full items-stretch text-white">
-        {/* User List Section */}
-        <div className="flex flex-col gap-6 w-4/12">
+        <div className="flex flex-col gap-6 w-4/12 justify-between">
           <div className="bg-gray-800 rounded-md p-4 shadow-lg">
             <UserList userData={userList.vendor} title="Vendor" />
           </div>
@@ -73,8 +72,6 @@ const Dashboard = () => {
             <UserList userData={userList.customer} title="Customer" />
           </div>
         </div>
-
-        {/* Chart Section */}
         <div className="w-8/12 bg-gray-800 rounded-md border border-gray-700 shadow-lg p-4">
           <TimeRangeChart />
         </div>

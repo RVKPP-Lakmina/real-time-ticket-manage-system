@@ -1,5 +1,6 @@
 import {
   ChartFilterData,
+  ErrorMessage,
   MainStoreProviderProps,
   UserCard,
   WebSocketResponseMessage,
@@ -13,6 +14,7 @@ import AlertToast from "@/classes/toast";
 import Progress from "@/components/ui/progress";
 import Navigation from "@/components/Navigation";
 import { WebSocketService } from "@/service/WebSocketService";
+import { getAllUsers } from "@/service/api/create-user-api";
 
 const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
   children,
@@ -64,6 +66,12 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
           });
         },
       },
+
+      {
+        id: 3,
+        status: "locked",
+        task: () => Promise.all([getAllUsers()]),
+      },
     ];
   }, [toast]);
 
@@ -79,6 +87,8 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
       }
     }
 
+    console.log(tasks);
+
     setIsInitializing(false);
   }, [tasks]);
 
@@ -92,32 +102,51 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
         throw new Error("WebSocket is not initialized.");
       }
 
-      wsService.setMessageCallback((data: WebSocketResponseMessage) => {
-        if (
-          data?.["date"] &&
-          data?.["ticketPoolCapacity"] &&
-          data?.["pendingTotalTickets"]
-        ) {
+      wsService.setMessageCallback(
+        (data: WebSocketResponseMessage | ErrorMessage) => {
+          if (data.status === -1) {
+            AlertToast.error(data.message);
+            return;
+          }
+
+          const {
+            user = null,
+            date = new Date(),
+            ticketPoolCapacity = 0,
+            pendingTotalTickets = 0,
+            activeStatus = false,
+            status = 1,
+          } = data;
+
+          if (user || user !== null) {
+            const userId: string = user.id;
+
+            if (
+              userBuffer.current?.[userId] &&
+              userBuffer.current?.[userId]?.active !== user?.active
+            ) {
+              userBuffer.current[userId].active = user.active;
+            }
+
+            if (userBuffer.current[userId]) {
+              userBuffer.current[userId].totalPurchase! += user.rate;
+            } else {
+              userBuffer.current[userId] = {
+                ...user,
+                totalPurchase: user.rate,
+              };
+            }
+          }
+
           messageBuffer.current.push({
-            date: data["date"],
-            ticketPoolCapacity: data["ticketPoolCapacity"],
-            pendingTotalTickets: data["pendingTotalTickets"],
+            date,
+            ticketPoolCapacity,
+            pendingTotalTickets,
+            activeStatus,
+            status,
           });
         }
-
-        if (data?.user) {
-          const userId: string = data.user.id;
-
-          if (userBuffer.current[userId]) {
-            userBuffer.current[userId].totalPurchase! += data.user.rate;
-          } else {
-            userBuffer.current[userId] = {
-              ...data.user,
-              totalPurchase: data.user.rate,
-            };
-          }
-        }
-      });
+      );
     } catch (error) {
       console.error("Failed to handle WebSocket data:", error);
     }

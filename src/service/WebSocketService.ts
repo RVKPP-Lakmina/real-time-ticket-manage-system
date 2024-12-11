@@ -1,11 +1,15 @@
-import { WebSocketResponseMessage } from "@/interfaces/main-store";
+import {
+  ErrorMessage,
+  WebSocketResponseMessage,
+} from "@/interfaces/main-store";
 
 // src/utils/websocket.ts
 export class WebSocketService {
   private socket: WebSocket | null = null;
   private messageQueue: string[] = [];
-  private messageCallback: ((data: WebSocketResponseMessage) => void) | null =
-    null;
+  private messageCallback:
+    | ((data: WebSocketResponseMessage | ErrorMessage) => void)
+    | null = null;
 
   constructor(private url: string) {}
 
@@ -19,7 +23,16 @@ export class WebSocketService {
 
     this.socket.onmessage = (event) => {
       if (this.messageCallback) {
-        const data = JSON.parse(event.data);
+        let data: WebSocketResponseMessage | ErrorMessage = {
+          status: -1,
+          message: "something went wrong",
+        };
+        try {
+          data = JSON.parse(event.data);
+        } catch {
+          console.error("Failed to parse message data");
+        }
+
         this.messageCallback(data);
       } else {
         console.error("No message callback defined.");
@@ -56,7 +69,9 @@ export class WebSocketService {
     }
   }
 
-  setMessageCallback(callback: (data: WebSocketResponseMessage) => void) {
+  setMessageCallback(
+    callback: (data: WebSocketResponseMessage | ErrorMessage) => void
+  ) {
     this.messageCallback = callback;
   }
 

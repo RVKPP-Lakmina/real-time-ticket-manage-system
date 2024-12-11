@@ -5,7 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { saveUser } from "@/service/service";
+import { saveUser } from "@/service/api/create-user-api";
+import AlertToast from "@/classes/toast";
 
 const schema = z.object({
   name: z.string().min(1, { message: "User Name is required" }),
@@ -40,12 +41,14 @@ const UserCreateForm = () => {
 
       const response = await saveUser({ name, rate, prefix: userType });
 
+      console.log(response);
       if (response.status === 200) {
-        alert("User created successfully");
+        AlertToast.success("User Created SuccessFully");
+        return;
       }
-      alert("User created successfully");
+      AlertToast.error("Failed to create user");
     } catch {
-      alert("Failed to create user");
+      AlertToast.error("Failed to create user");
     }
   };
 

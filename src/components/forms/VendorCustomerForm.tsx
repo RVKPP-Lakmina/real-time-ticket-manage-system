@@ -1,8 +1,11 @@
-import React from "react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, { useMemo } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Select from "react-select";
 import * as z from "zod";
+import { CachedStorege } from "@/service/cache/cachine-storage";
+import { UserCreateResponse } from "@/interfaces/api";
 
 const schema = z.object({
   totalTicketCount: z
@@ -32,21 +35,6 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-const vendorsOptions = [
-  { value: "vendor1", label: "Vendor 1", rate: 100 },
-  { value: "vendor3", label: "Vendor 3", rate: 100 },
-  { value: "vendor2", label: "Vendor 2", rate: 100 },
-  { value: "vendor5", label: "Vendor 5", rate: 100 },
-  { value: "vendor10", label: "Vendor 10", rate: 200 },
-  // Add more vendors as needed
-];
-
-const customersOptions = [
-  { value: "customer1", label: "Customer 1" },
-  { value: "customer2", label: "Customer 2" },
-  // Add more customers as needed
-];
-
 const customStyles = {
   multiValue: (provided: any) => ({
     ...provided,
@@ -64,6 +52,28 @@ const TicketBookingForm: React.FC = () => {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  const users = CachedStorege.instance.get("users") as UserCreateResponse[];
+
+  const options = useMemo(() => {
+    const vendorsOptions = (users || [])
+      .map((user: UserCreateResponse) => {
+        if (user.prefix === "vendor") {
+          return { value: user.id, label: user.name, rate: user.rate };
+        }
+      })
+      .filter((option: { value: string; label: string } | undefined) => option);
+
+    const customersOptions = (users || [])
+      .map((user: UserCreateResponse) => {
+        if (user.prefix === "customer") {
+          return { value: user.id, label: user.name };
+        }
+      })
+      .filter((option: { value: string; label: string } | undefined) => option);
+
+    return { vendorsOptions, customersOptions };
+  }, [users]);
 
   const onSubmit: SubmitHandler<FormData> = (data) => {
     console.log(data);
@@ -128,7 +138,7 @@ const TicketBookingForm: React.FC = () => {
               <label className="block text-white">Vendors</label>
               <Select
                 isMulti
-                options={vendorsOptions}
+                options={options.vendorsOptions}
                 className="basic-multi-select mb-2"
                 classNamePrefix="select"
                 onChange={handleVendorsChange}
@@ -142,7 +152,7 @@ const TicketBookingForm: React.FC = () => {
               <label className="block text-white">Customers</label>
               <Select
                 isMulti
-                options={customersOptions}
+                options={options.customersOptions}
                 className="basic-multi-select mb-2"
                 classNamePrefix="select"
                 onChange={handleCustomersChange}

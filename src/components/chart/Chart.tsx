@@ -29,7 +29,15 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function TimeRangeChart() {
-  const { filteredData } = useMainStore();
+  const { filteredData, wsService } = useMainStore();
+
+  const latestReponse = filteredData[filteredData.length - 1];
+
+  const stopUserSimulation = () => {
+    wsService.sendMessage(
+      `${latestReponse?.activeStatus ? "stopSimulation:" : "startSimulation:"}`
+    );
+  };
 
   return (
     <Card className="bg-black text-white border-none shadow-md rounded-lg w-full h-full">
@@ -45,11 +53,12 @@ export default function TimeRangeChart() {
           </CardDescription>
         </div>
 
-        <div>
-          <h3>Total Pool Ticket Count Now:</h3>
-          <h2>
-            {filteredData[filteredData.length - 1]?.["ticketPoolCapacity"]}
-          </h2>
+        <div className="p-[3px] relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg" />
+          <div className="px-8 py-6 bg-black rounded-[6px]    relative group transition duration-200 text-white">
+            <h3>Total Pool Ticket Count Now:</h3>
+            <h2>Ticket: {latestReponse?.["ticketPoolCapacity"]}</h2>
+          </div>
         </div>
       </CardHeader>
 
@@ -149,16 +158,19 @@ export default function TimeRangeChart() {
           </AreaChart>
         </ChartContainer>
 
-        <div className="flex gap-5 items-center">
-          <div>
-            <h3>Remainig Total Ticket Count</h3>
-            <h2>
-              {filteredData[filteredData.length - 1]?.["pendingTotalTickets"]}
-            </h2>
+        <div className="flex gap-5 items-stretch px-5">
+          <div className="p-[3px] relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg" />
+            <div className="px-8 py-6 bg-black rounded-[6px]    relative group transition duration-200 text-white">
+              <h3>Remainig Total Ticket Count</h3>
+              <h1>Ticket: {latestReponse?.["pendingTotalTickets"]}</h1>
+            </div>
           </div>
-
-          <CinamaticButton onClick={() => {}}>
-            {filteredData.length}
+          <CinamaticButton
+            onClick={stopUserSimulation}
+            activeStatus={latestReponse?.activeStatus}
+          >
+            {latestReponse?.activeStatus ? "Stop" : "Start"}
           </CinamaticButton>
         </div>
       </CardContent>

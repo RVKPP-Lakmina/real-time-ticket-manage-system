@@ -43,15 +43,18 @@ const UserList = ({
                   Name: {user.name.toLocaleUpperCase()} (Rate: {user.rate})
                 </span>
                 <span>Total Ticket owned: {user.totalPurchase}</span>
-
-                <AlertDialogModal onClick={() => handleRemoveUser(user.id)}>
-                  <FiMinusCircle
-                    color="red"
-                    size="18px"
-                    className="cursor-pointer"
-                    title="Remove User"
-                  />
-                </AlertDialogModal>
+                {user?.active ? (
+                  <AlertDialogModal onClick={() => handleRemoveUser(user.id)}>
+                    <FiMinusCircle
+                      color="red"
+                      size="18px"
+                      className="cursor-pointer"
+                      title="Remove User"
+                    />
+                  </AlertDialogModal>
+                ) : (
+                  <IoMdPersonAdd color="green" size="25px" title="Add User" />
+                )}
               </div>
               <Separator className="my-2 border-gray-700" />
             </div>
