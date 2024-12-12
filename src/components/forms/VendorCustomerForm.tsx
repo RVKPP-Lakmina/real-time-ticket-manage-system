@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
@@ -10,8 +8,8 @@ import AlertToast from "@/classes/toast";
 import Select, { MultiValue } from "react-select";
 import useMainStore from "@/hooks/use-main-store";
 import { CachedStorege } from "@/service/cache/cachine-storage";
-import { createConfigurationData } from "@/service/api/create-configs";
 import { ConfigurationData } from "@/interfaces/create-configurations";
+import { createConfigurationData } from "@/service/api/create-configs";
 
 interface VendorOption {
   value: string;
@@ -25,33 +23,33 @@ interface CustomerOption {
   rate: number;
 }
 
-const schema = z.object({
-  totalTicketCount: z.number().min(1, "Total Ticket Count is required"),
-  maxPoolTicketCount: z
-    .number()
-    .min(1, "Maximum Pool Ticket Count is required")
-    .max(10, "Maximum Pool Ticket Count must be less than 10"),
-  vendors: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        rate: z.number().min(0, "Rate must be positive"),
-      })
-    )
-    .min(1, "At least one vendor is required"),
-  customers: z
-    .array(
-      z.object({
-        id: z.string(),
-        name: z.string(),
-        rate: z.number().min(0, "Rate must be positive"),
-      })
-    )
-    .min(1, "At least one customer is required"),
-});
+// const schema = z.object({
+//   totalTicketCount: z.number().min(1, "Total Ticket Count is required"),
+//   maxPoolTicketCount: z
+//     .number()
+//     .min(1, "Maximum Pool Ticket Count is required")
+//     .max(10, "Maximum Pool Ticket Count must be less than 10"),
+//   vendors: z
+//     .array(
+//       z.object({
+//         id: z.string(),
+//         name: z.string(),
+//         rate: z.number().min(0, "Rate must be positive"),
+//       })
+//     )
+//     .min(1, "At least one vendor is required"),
+//   customers: z
+//     .array(
+//       z.object({
+//         id: z.string(),
+//         name: z.string(),
+//         rate: z.number().min(0, "Rate must be positive"),
+//       })
+//     )
+//     .min(1, "At least one customer is required"),
+// });
 
-type FormData = z.infer<typeof schema>;
+// type FormData = z.infer<typeof schema>;
 
 const customStyles = {
   multiValue: (provided: any) => ({
@@ -62,27 +60,19 @@ const customStyles = {
 };
 
 const TicketBookingForm: React.FC = () => {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    reset,
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  const { register, handleSubmit, setValue, reset } = useForm();
 
   const { filteredData } = useMainStore();
   const latestResponse = filteredData[filteredData.length - 1];
+  const errors: any = useRef({});
 
   const options = useMemo(() => {
     const users = CachedStorege.instance.get("users") || [];
-
     const vendorsOptions: VendorOption[] = users
       .filter((user: any) => user.prefix === "vendor")
       .map((user: any) => ({
         value: user.id,
-        label: `${user.name} (rate: ${user.rate})`,
+        label: user.name,
         rate: user.rate,
       }));
 
@@ -91,21 +81,91 @@ const TicketBookingForm: React.FC = () => {
       .map((user: any) => ({
         value: user.id,
         label: user.name,
+        rate: user.rate,
       }));
 
     return { vendorsOptions, customersOptions };
   }, []);
 
-  const onSubmit: SubmitHandler<FormData> = async (data: ConfigurationData) => {
+  const onSubmit: SubmitHandler<ConfigurationData> = async (
+    data: ConfigurationData
+  ) => {
     try {
-      const response = await createConfigurationData(data);
+      const { maxPoolTicketCount, totalTicketCount, customers, vendors } = data;
+      const errorItems: any = {};
+      if (!totalTicketCount) {
+        errorItems["totalTicketCount"] = {
+          message: "Total Ticket Count is required",
+        };
+      }
 
-      console.log(response);
+      if (!maxPoolTicketCount) {
+        errorItems["maxPoolTicketCount"] = {
+          message: "Maximum Pool Ticket Count is required",
+        };
+      }
+
+      if (
+        maxPoolTicketCount &&
+        totalTicketCount &&
+        maxPoolTicketCount > totalTicketCount
+      ) {
+        errorItems["maxPoolTicketCount"] = {
+          message:
+            "Maximum Pool Ticket Count must be less than Total Ticket Count",
+        };
+      }
+
+      if (!customers) {
+        errorItems["customers"] = {
+          message: "At least one customer is required",
+        };
+      }
+
+      if (!vendors) {
+        errorItems["vendors"] = { message: "At least one vendor is required" };
+      }
+
+      if (Object.keys(errorItems).length) {
+        errors.current = errorItems;
+        return;
+      }
+
+      const responseData: any = {
+        maxPoolTicketCount,
+        totalTicketCount,
+        customers: {},
+        vendors: {},
+      };
+
+      customers.forEach((customer) => {
+        responseData.customers[customer.id] = {
+          rate: customer.rate,
+          name: customer.name,
+        };
+      });
+
+      vendors.forEach((vendor) => {
+        responseData.vendors[vendor.id] = {
+          rate: vendor.rate,
+          name: vendor.name,
+        };
+      });
+
+      console.log(responseData);
+
+      const response = await createConfigurationData(responseData);
+
+      if (response.status !== 200) {
+        AlertToast.error("Failed to submit the form");
+        return;
+      }
 
       AlertToast.success("Form submitted successfully");
       reset();
       setValue("customers", []);
       setValue("vendors", []);
+      errors.current = {};
     } catch {
       AlertToast.error("Failed to submit the form");
     }
@@ -151,9 +211,9 @@ const TicketBookingForm: React.FC = () => {
                 {...register("totalTicketCount", { valueAsNumber: true })}
                 disabled={latestResponse?.activeStatus}
               />
-              {errors.totalTicketCount && (
+              {errors.current.totalTicketCount && (
                 <p className="text-red-500">
-                  {errors.totalTicketCount.message}
+                  {errors.current.totalTicketCount.message}
                 </p>
               )}
             </div>
@@ -168,9 +228,9 @@ const TicketBookingForm: React.FC = () => {
                 {...register("maxPoolTicketCount", { valueAsNumber: true })}
                 disabled={latestResponse?.activeStatus}
               />
-              {errors.maxPoolTicketCount && (
+              {errors.current.maxPoolTicketCount && (
                 <p className="text-red-500">
-                  {errors.maxPoolTicketCount.message}
+                  {errors.current.maxPoolTicketCount.message}
                 </p>
               )}
             </div>
@@ -187,8 +247,8 @@ const TicketBookingForm: React.FC = () => {
                 onChange={handleVendorsChange}
                 styles={customStyles}
               />
-              {errors.vendors && (
-                <p className="text-red-500">{errors.vendors.message}</p>
+              {errors.current.vendors && (
+                <p className="text-red-500">{errors.current.vendors.message}</p>
               )}
             </div>
 
@@ -201,8 +261,10 @@ const TicketBookingForm: React.FC = () => {
                 classNamePrefix="select"
                 onChange={handleCustomersChange}
               />
-              {errors.customers && (
-                <p className="text-red-500">{errors.customers.message}</p>
+              {errors.current.customers && (
+                <p className="text-red-500">
+                  {errors.current.customers.message}
+                </p>
               )}
             </div>
           </div>
