@@ -23,34 +23,6 @@ interface CustomerOption {
   rate: number;
 }
 
-// const schema = z.object({
-//   totalTicketCount: z.number().min(1, "Total Ticket Count is required"),
-//   maxPoolTicketCount: z
-//     .number()
-//     .min(1, "Maximum Pool Ticket Count is required")
-//     .max(10, "Maximum Pool Ticket Count must be less than 10"),
-//   vendors: z
-//     .array(
-//       z.object({
-//         id: z.string(),
-//         name: z.string(),
-//         rate: z.number().min(0, "Rate must be positive"),
-//       })
-//     )
-//     .min(1, "At least one vendor is required"),
-//   customers: z
-//     .array(
-//       z.object({
-//         id: z.string(),
-//         name: z.string(),
-//         rate: z.number().min(0, "Rate must be positive"),
-//       })
-//     )
-//     .min(1, "At least one customer is required"),
-// });
-
-// type FormData = z.infer<typeof schema>;
-
 const customStyles = {
   multiValue: (provided: any) => ({
     ...provided,
@@ -60,7 +32,8 @@ const customStyles = {
 };
 
 const TicketBookingForm: React.FC = () => {
-  const { register, handleSubmit, setValue, reset } = useForm();
+  const { register, handleSubmit, setValue, reset } =
+    useForm<ConfigurationData>();
 
   const { filteredData } = useMainStore();
   const latestResponse = filteredData[filteredData.length - 1];
