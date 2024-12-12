@@ -27,6 +27,7 @@ const UserCreateForm = () => {
     handleSubmit,
     formState: { errors },
     watch,
+    reset,
     setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -41,9 +42,9 @@ const UserCreateForm = () => {
 
       const response = await saveUser({ name, rate, prefix: userType });
 
-      console.log(response);
       if (response.status === 200) {
         AlertToast.success("User Created SuccessFully");
+        reset();
         return;
       }
       AlertToast.error("Failed to create user");
