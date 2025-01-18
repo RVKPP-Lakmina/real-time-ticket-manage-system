@@ -26,8 +26,8 @@ const createCustomers = async (data: CustomerOption[]) => {
 };
 
 const addConfigs = async (data: {
-  totalTicketCount: number;
-  maxPoolTicketCount: number;
+  totalTickets: number;
+  maxCapacity: number;
 }) => {
   try {
     const res = await api.post("/configuration", data);
@@ -41,8 +41,8 @@ export const createConfigurationData = async (data: ConfigurationData) => {
   try {
     const [configs, customers, vendors] = await Promise.all([
       addConfigs({
-        totalTicketCount: data.totalTicketCount,
-        maxPoolTicketCount: data.maxPoolTicketCount,
+        totalTickets: data.totalTickets,
+        maxCapacity: data.maxCapacity,
       }),
       createCustomers(data.customers),
       createVendors(data.vendors),

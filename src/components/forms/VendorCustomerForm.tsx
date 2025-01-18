@@ -64,26 +64,22 @@ const TicketBookingForm: React.FC = () => {
     data: ConfigurationData
   ) => {
     try {
-      const { maxPoolTicketCount, totalTicketCount, customers, vendors } = data;
+      const { maxCapacity, totalTickets, customers, vendors } = data;
       const errorItems: any = {};
-      if (!totalTicketCount) {
-        errorItems["totalTicketCount"] = {
+      if (!totalTickets) {
+        errorItems["totalTickets"] = {
           message: "Total Ticket Count is required",
         };
       }
 
-      if (!maxPoolTicketCount) {
-        errorItems["maxPoolTicketCount"] = {
+      if (!maxCapacity) {
+        errorItems["maxCapacity"] = {
           message: "Maximum Pool Ticket Count is required",
         };
       }
 
-      if (
-        maxPoolTicketCount &&
-        totalTicketCount &&
-        maxPoolTicketCount > totalTicketCount
-      ) {
-        errorItems["maxPoolTicketCount"] = {
+      if (maxCapacity && totalTickets && maxCapacity > totalTickets) {
+        errorItems["maxCapacity"] = {
           message:
             "Maximum Pool Ticket Count must be less than Total Ticket Count",
         };
@@ -105,8 +101,8 @@ const TicketBookingForm: React.FC = () => {
       }
 
       const responseData: any = {
-        maxPoolTicketCount,
-        totalTicketCount,
+        maxCapacity,
+        totalTickets,
         customers: {},
         vendors: {},
       };
@@ -124,8 +120,6 @@ const TicketBookingForm: React.FC = () => {
           name: vendor.name,
         };
       });
-
-      console.log(responseData);
 
       const response = await createConfigurationData(responseData);
 
@@ -175,35 +169,35 @@ const TicketBookingForm: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="totalTicketCount" className="text-gray-400">
+              <Label htmlFor="totalTickets" className="text-gray-400">
                 Total Ticket Count
               </Label>
               <Input
                 className="mt-1 bg-gray-700 text-white border border-gray-600 rounded-md"
                 type="number"
-                {...register("totalTicketCount", { valueAsNumber: true })}
+                {...register("totalTickets", { valueAsNumber: true })}
                 disabled={latestResponse?.activeStatus}
               />
-              {errors.current.totalTicketCount && (
+              {errors.current.totalTickets && (
                 <p className="text-red-500">
-                  {errors.current.totalTicketCount.message}
+                  {errors.current.totalTickets.message}
                 </p>
               )}
             </div>
 
             <div>
-              <Label htmlFor="maxPoolTicketCount" className="text-gray-400">
+              <Label htmlFor="maxCapacity" className="text-gray-400">
                 Maximum Pool Ticket Count
               </Label>
               <Input
                 type="number"
                 className="mt-1 bg-gray-700 text-white border border-gray-600 rounded-md"
-                {...register("maxPoolTicketCount", { valueAsNumber: true })}
+                {...register("maxCapacity", { valueAsNumber: true })}
                 disabled={latestResponse?.activeStatus}
               />
-              {errors.current.maxPoolTicketCount && (
+              {errors.current.maxCapacity && (
                 <p className="text-red-500">
-                  {errors.current.maxPoolTicketCount.message}
+                  {errors.current.maxCapacity.message}
                 </p>
               )}
             </div>

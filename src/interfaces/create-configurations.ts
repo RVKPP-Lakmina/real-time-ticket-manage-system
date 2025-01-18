@@ -11,8 +11,8 @@ export interface CustomerOption {
 }
 
 export interface ConfigurationData {
-  totalTicketCount: number;
-  maxPoolTicketCount: number;
+  totalTickets: number;
+  maxCapacity: number;
   vendors: VendorOption[];
   customers: CustomerOption[];
 }
