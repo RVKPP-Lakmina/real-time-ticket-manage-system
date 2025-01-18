@@ -28,6 +28,8 @@ const chartConfig = {
 export default function TimeRangeChart() {
   const { filteredData, wsService } = useMainStore();
 
+  console.log(filteredData);
+
   const latestReponse = filteredData[filteredData.length - 1];
 
   const stopUserSimulation = () => {
@@ -108,7 +110,7 @@ export default function TimeRangeChart() {
               minTickGap={32}
               tick={{ fill: "#aaa", fontSize: "12px" }}
               tickFormatter={(value) => {
-                const seconds = Math.floor(value / 10000); // Assuming `value` is in milliseconds
+                const seconds = Math.floor(value / 1000) % 60; // Assuming `value` is in milliseconds
                 return `${seconds}s`;
               }}
             />
@@ -131,7 +133,7 @@ export default function TimeRangeChart() {
               content={
                 <ChartTooltipContent
                   labelFormatter={(value) => {
-                    const seconds = Math.floor(value / 10000); // Assuming `value` is in milliseconds
+                    const seconds = Math.floor(value / 1000) % 60; // Assuming `value` is in milliseconds
                     return `${seconds}s`;
                   }}
                   indicator="dot"

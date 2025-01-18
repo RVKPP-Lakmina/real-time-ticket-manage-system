@@ -1,4 +1,8 @@
-const Progress = () => {
+interface ProgressProps {
+  title?: string;
+}
+
+const Progress: React.FC<ProgressProps> = ({ title }: ProgressProps) => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black">
       {/* Spinning Loader */}
@@ -9,7 +13,7 @@ const Progress = () => {
 
       {/* Text with Fade In and Out Animation */}
       <p className="text-white text-lg font-medium animate-fade">
-        Please wait, the page is getting ready...
+        {title || "Please wait, the page is getting ready..."}
       </p>
     </div>
   );

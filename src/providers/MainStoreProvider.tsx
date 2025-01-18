@@ -28,6 +28,7 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
   const [filteredData, setFilteredData] = React.useState<ChartFilterData[]>([]);
   const messageBuffer = useRef<ChartFilterData[]>([]);
   const userBuffer = useRef<Record<string, UserCard>>({});
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const tasks = useMemo(() => {
     return [
@@ -86,9 +87,6 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
         }
       }
     }
-
-    console.log(tasks);
-
     setIsInitializing(false);
   }, [tasks]);
 
@@ -99,7 +97,12 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
   const handleWebSocket = useCallback(() => {
     try {
       if (!wsService) {
+        setIsLoading(true);
         throw new Error("WebSocket is not initialized.");
+      }
+
+      if (isLoading) {
+        setIsLoading(false);
       }
 
       wsService.setMessageCallback(
@@ -192,6 +195,14 @@ const MainStoreProvider: React.FC<MainStoreProviderProps> = ({
 
     return { push };
   };
+
+  if (isLoading) {
+    return (
+      <>
+        <Progress title="Waitting for the Network" />
+      </>
+    );
+  }
 
   return (
     <>
